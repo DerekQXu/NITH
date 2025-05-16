@@ -1,7 +1,7 @@
 # Forecasting Needles in a Time Series Haystack
 
 ## Overview
-Spikes are a common characteristic of real-world time series, often representing rare or significant events. However, time series foundation models (TSFMs) struggle to effectively forecast these spiky patterns. To address this challenge, we introduce the **Needle-in-a-Time-Series Haystack Benchmark (NiTS-Haystack)**, a novel benchmark designed to evaluate the performance of TSFMs on spiky time series data. Our benchmark comprises both real-world and synthetic datasets:
+Spikes are a common characteristic of real-world time series, often representing rare or significant events. However, time series foundation models (TSFMs) struggle to effectively forecast these spiky patterns. To address this challenge, we introduce the **Needle-in-a-Time-Series Haystack Benchmark (NITH)**, a novel benchmark designed to evaluate the performance of TSFMs on spiky time series data. Our benchmark comprises both real-world and synthetic datasets:
 
 - **Real-World Spiky Time Series:** A collection of real-world datasets from domains like energy, traffic, and biomedical signals, reflecting naturally occurring spikes.
 - **Synthetic Spiky Time Series:** Generated using stochastic point processes ("Needles") injected into regular stochastic processes ("Haystack") to simulate spiky behavior in controlled environments.
