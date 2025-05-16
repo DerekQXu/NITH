@@ -191,10 +191,6 @@ def sample_spike_train(pp_mean, pp_stdev, stop_sign):
             break
     return np.array(spike_loc)
 
-
-# def generate_needles_v6(
-# 		num_samples, min_period=4, max_period=128, noise=0.2, 
-# 		context_len=512, forecast_len=512):
 def generate_needles_v6(
         dataset_config, num_samples=100,
         needle_shape_li = ('gaussian', 'exp', 'triangle'),
@@ -333,135 +329,6 @@ def plot_ts(signal, needle_shape, needle_signal, haystack, sign, needle_std, hay
     plt.savefig('/mnt/fsx/_spike_signal.png')
 
 
-
-
-
-# def generate_needles_v5(
-#         dataset_config, N=1_000_000, sequence_length=5000, forecast_length=128, 
-#         fixed_period=None, fixed_omega=None, fixed_sigma_T=None, 
-#         include_original_signal=False
-#     ):
-#     '''
-#     context_length = 512
-#     forecast_length = 128
-#     min_needles = 8
-#     -> >6.4 needles in context
-#     -> >1.6 needles in forecast
-#     '''
-#     ts_all = []
-#     for _ in tqdm(range(N)):
-#         period = fixed_period if fixed_period is not None else int(U(8,64)) #int(2**U(3,6))
-#         omega = fixed_omega if fixed_omega is not None else int(2**U(0,max(np.log2(period)-1, 0))) #U(1,4) #int(2**U(0,max(np.log2(period)-1, 0))) #int(2**U(0,max(np.log2(period)-2, 0)))
-#         sigma_T = fixed_sigma_T if fixed_sigma_T is not None else int(2**U(-1,6-2)) #np.log2(omega)))
-#         ts = generate_needles_v5_helper(
-#             dataset_config, period=period, omega=omega, sigma_T=sigma_T, 
-#             sequence_length=sequence_length, forecast_length=forecast_length, 
-#             include_original_signal=include_original_signal)
-#         ts_all.append(ts)
-#     return ts_all
-
-# def generate_needles_v5_helper(
-#         dataset_config, sequence_length=5000, forecast_length=128, #512+128, forecast_length=128,
-#         period=None, omega=None, sigma_T=None, include_original_signal=False
-#     ):
-#     '''
-#     context_length = 512
-#     forecast_length = 128
-#     min_needles = 8
-#     -> >6.4 needles in context
-#     -> >1.6 needles in forecast
-#     '''
-#     ts_all = []
-#     Q_inv = 1.959964
-
-#     # sample periods
-#     T_accum_li = None
-#     needle_count = math.ceil(sequence_length/period)
-
-#     # generate until needle in haystack
-#     while T_accum_li is None or T_accum_li[-1] < sequence_length-forecast_length: # or T_accum_li[-1] >= 8192:
-#         if T_accum_li is not None:
-#             print(f'No needle in forecast: regerating Dirac Comb {T_accum_li[-1]} not in ({sequence_length-forecast_length}, {sequence_length}); period={period}, omega={omega}, sigma_T={sigma_T}')
-#         kT = sigma_T/period
-#         T_accum_li = np.cumsum(sample_T_li_good(period, needle_count, kT))
-#         offset_start = int(random.random() * T_accum_li[0])
-#         T_accum_li -= offset_start
-#         assert all(T_accum_li >= 0)
-#         T_accum_li = T_accum_li[T_accum_li < sequence_length]
-#         # make sure Dirac comb includes needle in forecast and at most 256 < context < 8192
-#         # T_accum_li = T_accum_li[T_accum_li >= 0]
-#         # if T_accum_li[-1] >= 8192:
-#         #     needle_count = max(1, needle_count-1)
-#         # if T_accum_li[-1] < 256-forecast_length:
-#         #     needle_count += 1
-#     # assert needle_count == len(T_accum_li), f'{needle_count} {T_accum_li}'
-
-#     # make the needle signal an outlier
-#     scale = U(3,5)
-#     DC = U(1,5) * scale
-#     flip = +1 if random.random() < 0.8 else -1
-#     ts_onlyneedle = flip*(scale * normalize(sample_wrapperv2(dataset_config, seq_len=len(T_accum_li))) + DC)
-
-#     # construct kronecker delta comb
-#     kronecker_delta_comb = np.zeros(sequence_length)
-#     for n_hat_sample, T_accum in zip(ts_onlyneedle, T_accum_li):
-#         if T_accum >= len(kronecker_delta_comb):
-#             break
-#         kronecker_delta_comb[T_accum] = n_hat_sample
-#     # kronecker_delta_comb = kronecker_delta_comb[:max(256, T_accum_li[-1]+offset_end)]
-#     L = len(kronecker_delta_comb) # this is just sequence_length
-
-#     # construct kernel
-#     from scipy.stats import norm
-#     sigma_K = omega/(2*Q_inv)
-#     tdomain = np.arange(L, dtype=float) * L/(L-1)
-#     tdomain -= tdomain[int(L/2)]
-#     tdomain /= sigma_K
-#     kernel = 1/sigma_K * norm.pdf(tdomain) * (sigma_K/norm.pdf(0)) # renormalize
-#     kernel = (kernel > 0.03).astype(float)
-
-#     # convolution
-#     ts_haystack = normalize(sample_wrapperv2(dataset_config, seq_len=L)).reshape(-1)
-#     ts_needle = np.convolve(kernel, kronecker_delta_comb, mode='same').reshape(-1)
-
-#     if include_original_signal:
-#         ts_needle_in_haystack = ts_haystack + ts_needle
-#     else:
-#         ts_needle_in_haystack = normalize(ts_haystack + ts_needle)
-    
-#     # check if needle in forecast
-#     needle_mask = kronecker_delta_comb.astype(bool)
-#     needle_indices = np.nonzero(kronecker_delta_comb)[0].reshape(-1)
-#     assert any(needle_indices >= len(ts_needle_in_haystack) - forecast_length), f'debug: {len(ts_needle_in_haystack)}, {needle_indices}, {T_accum_li}, {offset_start}, {offset_end}'
-
-#     # construct output
-#     ts_metadata = {
-#             'needle_mask': needle_mask, 
-#             'needle_indices': needle_indices,
-#             'kernel': kernel
-#         }
-#     if include_original_signal:
-#         new_x = np.arange(max(needle_indices)-min(needle_indices))+min(needle_indices)
-#         only_needle = np.interp(new_x, needle_indices, ts_onlyneedle[:len(needle_indices)])
-#         ts_metadata['ts_onlyneedle'] = (new_x, only_needle)
-#         ts_metadata['ts_haystack'] = normalize(ts_haystack)
-#     ts = \
-#         (ts_needle_in_haystack, 
-#         ts_metadata, {
-#             'needle_count': needle_count,
-#             'period': period,
-#             'omega': f'{omega:.2f}',
-#             'sigma_T': f'{sigma_T:.2f}',
-#             'scale': f'{scale:.2f}',
-#             'DC': f'{DC:.2f}',
-#             'flip': flip,
-#             # 'sigma': sigma,
-#         })
-#     return ts
-
-# random.seed(789) # 123
-# np.random.seed(789) # 123
-
 def plot_and_save_ts_li(nm, ts_li):
     convert_to_arrow(f'_{nm}_pt.arrow', time_series=[x[0] for x in ts_li])
     ts_li = ts_li[:10]
@@ -491,21 +358,7 @@ def main_train():
         dataset_all.load()
         dataset_config = {'all': dataset_all}
 
-    # HYPERPARAMETER TUNING DONE! LET'S SKIP THIS!
     for nm, needle_shape_li, needle_symmetry_li, ng, noise in [
-        # ('nshape_g_nsymmetry_both', ('gaussian',), ('both',)),
-        # ('nshape_ge_nsymmetry_both', ('gaussian', 'exp'), ('both',)),
-        # ('nshape_get_nsymmetry_both', ('gaussian', 'exp', 'triangle'), ('both',)),
-        # ('nshape_g_nsymmetry_all', ('gaussian',), ('both', 'left', 'right')),
-        # ('nshape_ge_nsymmetry_all', ('gaussian', 'exp'), ('both', 'left', 'right')),
-        # ('nshape_get_nsymmetry_all', ('gaussian', 'exp', 'triangle'), ('both', 'left', 'right'))
-        # ('nshape_ge_nsymmetry_both_00_none', ('gaussian', 'exp'), ('both',), None, 0.1),
-        # ('nshape_ge_nsymmetry_both_00_none', ('gaussian', 'exp'), ('both',), None, 0.2),
-        # ('nshape_ge_nsymmetry_both_00_none', ('gaussian', 'exp'), ('both',), None, 0.3),
-        # ('nshape_ge_nsymmetry_both_00_3', ('gaussian', 'exp'), ('both',), 3, 0.0),
-        # ('nshape_ge_nsymmetry_both_00_5', ('gaussian', 'exp'), ('both',), 5, 0.0),
-        # ('nshape_ge_nsymmetry_both_00_10', ('gaussian', 'exp'), ('both',), 10, 0.0),
-        # ('nshape_ge_nsymmetry_both_00_20', ('gaussian', 'exp'), ('both',), 20, 0.0),
         ('nshape_ge_nsymmetry_all_00_3', ('gaussian', 'exp'), ('both', 'left', 'right'), 20, 0.0),
     ]:
         break
@@ -517,57 +370,13 @@ def main_train():
             )
         plot_and_save_ts_li(nm, ts_li)
     
-    # GOLDEN SETTINGS!
-    # ts_li, *_ = generate_needles_v6(
-    #         dataset_config, num_samples=10_000_000, noise=0.0, #5_000_000
-    #         needle_shape_li=('gaussian', 'exp'),
-    #         needle_symmetry_li=('both',),
-    #         needle_gap=None, forecast_len=512
-    #     )
-    # plot_and_save_ts_li('GOLDEN_ICML_512FORECAST', ts_li)
-    # ts_li, *_ = generate_needles_v6(
-    #         dataset_config, num_samples=10_000_000, noise=0.0, #5_000_000
-    #         needle_shape_li=('gaussian', 'exp'),
-    #         needle_symmetry_li=('both',),
-    #         needle_gap=None, forecast_len=128
-    #     )
-
-    # ts_li, *_ = generate_needles_v6(
-    #         dataset_config, num_samples=10_000_000, noise=0.0, #10_000_000
-    #         needle_shape_li=('gaussian', 'exp'),
-    #         needle_symmetry_li=('both',),
-    #         needle_gap=20, forecast_len=512
-    #     )
-    # plot_and_save_ts_li('GOLDEN_ICML_512FORECASTV1', ts_li)
-    # ts_li, *_ = generate_needles_v6(
-    #         dataset_config, num_samples=10_000_000, noise=0.0, #10_000_000
-    #         needle_shape_li=('gaussian', 'exp'),
-    #         needle_symmetry_li=('both', 'left', 'right'),
-    #         needle_gap=None, forecast_len=512
-    #     )
-    # plot_and_save_ts_li('GOLDEN_ICML_512FORECASTV2', ts_li)
-    # ts_li, *_ = generate_needles_v6(
-    #         dataset_config, num_samples=10_000_000, noise=0.0, #10_000_000
-    #         needle_shape_li=('gaussian', 'exp'),
-    #         needle_symmetry_li=('both', 'left', 'right'),
-    #         needle_gap=20, forecast_len=512
-    #     )
-    # plot_and_save_ts_li('GOLDEN_ICML_512FORECASTV3', ts_li)
-    
-    # ts_li, *_ = generate_needles_v6(
-    #         dataset_config, num_samples=10_000_000, noise=0.2, #10_000_000
-    #         needle_shape_li=('gaussian', 'exp'),
-    #         needle_symmetry_li=('both', 'left', 'right'),
-    #         needle_gap=20, forecast_len=512
-    #     )
-    # plot_and_save_ts_li('GOLDEN_ICML_512FORECASTV3_02', ts_li)
     ts_li, *_ = generate_needles_v6(
             dataset_config, num_samples=10_000_000, noise=0.4, #10_000_000
             needle_shape_li=('gaussian', 'exp'),
             needle_symmetry_li=('both', 'left', 'right'),
             needle_gap=20, forecast_len=512
         )
-    plot_and_save_ts_li('GOLDEN_ICML_512FORECASTV3_04', ts_li)
+    plot_and_save_ts_li('GOLDEN_512FORECASTV3_04', ts_li)
 
 def main_inference():
     random.seed(789) # 123
@@ -599,7 +408,7 @@ def main_inference():
                         needle_gap=20, forecast_len=forecast_len,
                         period_min=period, period_max=period, exp_beta=float(beta)
                     )
-                dn = f'/mnt/fsx/chronos-forecasting/pretrain_datasets/needle_synthbench_icml'
+                dn = f'/mnt/fsx/chronos-forecasting/pretrain_datasets/needle_synthbench'
                 dataset_nm = f'{noise}_{period}_{beta}'
                 pn = os.path.join(dn, f"{dataset_nm}.arrow")
                 convert_to_arrow(pn, time_series=[ts[0] for ts in ts_li])
@@ -610,7 +419,7 @@ def main_inference():
                     'pn': pn,
                     'prediction_length': forecast_len,
                 }]
-                with open(f'/mnt/fsx/chronos-forecasting/pretrain_datasets/needle_synthbench_icml/{dataset_nm}.yaml', 'w') as fp:
+                with open(f'/mnt/fsx/chronos-forecasting/pretrain_datasets/needle_synthbench/{dataset_nm}.yaml', 'w') as fp:
                     yaml.dump(zeroshot_cfg, fp)
 
 
@@ -745,29 +554,3 @@ def plot_all_casestudies(dn2nm=None):
 if __name__ == '__main__':
     main_train()
     # main_inference()
-    # plot_all_casestudies()
-    # plot_positive_negative_casestudies()
-
-    # random.seed(678) # 123
-    # np.random.seed(678) # 123
-    # dataset_config = {
-    #     'Synthetic': ArrowDataset('/mnt/fsx/chronos-forecasting/scripts/kernelsynth-data-1024.arrow', 'Synthetic'),
-    #     'Synthetic10K': ArrowDataset('/mnt/fsx/chronos-forecasting/scripts/kernelsynth-data-eff.arrow', 'Synthetic'),
-    #     # 'UTSD-2G': ArrowDataset('/mnt/fsx/chronos-forecasting/pretrain_datasets/UTSD-2G.arrow', 'UTSD-2G'),
-    # }
-    # # get base datasets
-    # for nm, dataset in dataset_config.items():
-    #     dataset.load()
-    # # if merged_sample:
-    # dataset_all = MergeDataset(list(dataset_config.values()))
-    # dataset_all.load()
-    # dataset_config = {'all': dataset_all}
-    # generate_needles_v6(
-    #         dataset_config, num_samples=1, noise=0.2,
-    #         needle_shape_li=('exp',),
-    #         needle_symmetry_li=('both',),
-    #         needle_gap=20, forecast_len=128,
-    #         period_min=64, period_max=64, exp_beta=3.0,
-    #         plot_signal=True
-    #     )
-    # assert False
