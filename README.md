@@ -17,13 +17,13 @@ pip install -r requirements.txt
 ```
 ## Dataset Generation.
 
-1. **Real-World Spiky Time Series:** Due to the fact that some datasets has restricted redistribution rights, the real world dataset can be downloaded from their websites, run the the following:
+1. **Real-World Spiky Time Series:** Due to the fact that some datasets have restricted redistribution rights, the real world dataset can be downloaded from their websites, run the the following to generate Real-NITH:
 
 ```bash
 python dataset_selection.py
 ```
 
-3. **Synthetic Spiky Time Series:** Stochastic point processes ("Needles") injected into regular stochastic processes ("Haystack") to isolate spiky behavior. The synthetic dataset can be generated purely through the python script:
+3. **Synthetic Spiky Time Series:** Stochastic point processes ("Needles") injected into regular stochastic processes ("Haystack") to isolate spiky behavior. The synthetic dataset (syn-NITH) can be generated purely through the python script:
 
 ```bash
 python get_data.py
