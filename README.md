@@ -25,34 +25,89 @@ pip install -r requirements.txt
 
 ## Dataset Generation
 
+### Gaussian Process Time Series
+
+Follow **Generating Synthetic Time Series (KernelSynth)** from [Chronos](https://github.com/amazon-science/chronos-forecasting/tree/main/scripts) to generate some Gaussian Process time series. Be sure to set the output length to 10000 in `kernel-synth.py`:
+
+```
+LENGTH = 1024
+```
+
+### Pretrain Synthetic Time Series
+
+
+Create base Gaussian time series, following [Gaussian Process Time Series](#gaussian-process-time-series), saving the output to:
+
+```
+/path/to/kernelsynth.arrow
+```
+
+To create the synthetic pretraining data, set the following config values in `get_data.py`:
+
+```
+PATH_TO_GAUSSIAN_PROCESSES = "/path/to/kernelsynth.arrow"
+SPLIT = "pretrain"
+```
+
+Generate the **NITH-Train** benchmark by running:
+```bash
+python generate_dataset.py
+```
+
+### Benchmark Synthetic Time Series
+
+
+Create base Gaussian time series, following [Gaussian Process Time Series](#gaussian-process-time-series), saving the output to:
+
+```
+/path/to/kernelsynth.arrow
+```
+
+Create an empty directory where the data will be saved:
+
+```
+/path/to/benchmark
+```
+
+Set the following config values in `get_data.py`:
+
+```
+PATH_TO_GAUSSIAN_PROCESSES = "/path/to/kernelsynth.arrow"
+SPLIT = "inference"
+PATH_TO_OUTPUT_BENCHMARK = "/path/to/benchmark"
+```
+
+Generate the **NITH-Synth** benchmark by running:
+```bash
+python generate_dataset.py
+```
+
 ### Real-World Spiky Time Series
+
 Due to redistribution restrictions, real-world datasets can be manually downloaded from the following sources:
 
 - [NAB (Numenta Anomaly Benchmark)](https://github.com/numenta/NAB)
 - [UCR Anomaly Archive](https://paperswithcode.com/dataset/ucr-anomaly-archive)
 - [Timer Dataset](https://thuml.github.io/timer/)
 
-Once downloaded, generate the **Real-NITH** benchmark by running:
-```bash
-python dataset_selection.py
+Set the following config values in `filter_datasets.py`:
+
+```
+PATH_TO_SAVED_DATASETS = '/path/to/saved_datasets'
+PATH_TO_FILTER_CONFIG = '/path/to/NITH/zero-shot.yaml'
 ```
 
-### Synthetic Spiky Time Series
-To simulate spiky behavior, synthetic datasets (**syn-NITH**) are generated purely through the following script:
+Once downloaded, generate the **NITH-Real** benchmark by running:
 ```bash
-python get_data.py
+python filter_datasets.py
 ```
-
----
 
 ## Evaluation Metric
 
 To evaluate model performance on these challenging datasets, we propose a novel metric: **Spiky Dynamic Time Warping (SDTW)**. This metric is designed to account for temporal lags in spiky signals, overcoming the limitations of traditional regression and anomaly detection metrics. The implementation can be found in:
+
 ```bash
 SDTW.py
 ```
-
-
-
 
 ---
