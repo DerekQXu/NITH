@@ -3,8 +3,10 @@
 ## Overview
 Spikes are a common characteristic of real-world time series, often representing rare or significant events. However, time series foundation models (TSFMs) struggle to effectively forecast these spiky patterns. To address this challenge, we introduce the **Needle-in-a-Time-Series Haystack Benchmark (NITH)**, a novel benchmark designed to evaluate the performance of TSFMs on spiky time series data. Our benchmark comprises both real-world and synthetic datasets:
 
-- **Real-World Spiky Time Series:** A collection of real-world datasets from domains like energy, traffic, and biomedical signals, reflecting naturally occurring spikes.
 - **Synthetic Spiky Time Series:** Generated using stochastic point processes ("Needles") injected into regular stochastic processes ("Haystack") to simulate spiky behavior in controlled environments.
+   - **Pretrain:** We provide a continuous pretraining dataset for foundation models to specialize on spiky time series.
+   - **Benchmark:** We provide a benchmark datasets to test foundation model sensitivity to different tyeps of spiky time series.
+- **Real-World Spiky Time Series:** A collection of real-world datasets from domains like energy, traffic, and biomedical signals, reflecting naturally occurring spikes.
 
 ---
 
@@ -107,7 +109,14 @@ python filter_datasets.py
 To evaluate model performance on these challenging datasets, we propose a novel metric: **Spiky Dynamic Time Warping (SDTW)**. This metric is designed to account for temporal lags in spiky signals, overcoming the limitations of traditional regression and anomaly detection metrics. The implementation can be found in:
 
 ```bash
-SDTW.py
+python3 SDTW.py
+```
+
+This reproduces the case study on different evaluation metrics in:
+
+```
+sdtw_metrics.png
+sdtw_time_series.png
 ```
 
 ---
