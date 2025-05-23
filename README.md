@@ -27,6 +27,8 @@ pip install -r requirements.txt
 
 ## Dataset Generation
 
+For ease of use, we preprocess all our datasets, which can be downloaded [here](https://www.kaggle.com/datasets/boranhan/syn-nith-pretraining).
+
 ### Gaussian Process Time Series
 
 Follow **Generating Synthetic Time Series (KernelSynth)** from [Chronos](https://github.com/amazon-science/chronos-forecasting/tree/main/scripts) to generate some Gaussian Process time series. Be sure to set the output length to 10000 in `kernel-synth.py`:
